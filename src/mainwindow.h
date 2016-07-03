@@ -3,6 +3,14 @@
 
 #include <QMainWindow>
 
+#include <Camera.h>
+
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+
 namespace Ui {
 class MainWindow;
 }
@@ -14,6 +22,20 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+    Camera _camera;
+    cv::Point2i _point[5];
+    int _click_index;
+    cv::Mat _R,_t;
+
+    static void onMouse( int evt, int x, int y, int flags, void* param );
+
+private slots:
+    void on_butCalibration_clicked();
+
+    void on_butCameraOpen_clicked();
+
+    void on_butStart_clicked();
 
 private:
     Ui::MainWindow *ui;
