@@ -27,6 +27,7 @@ public:
     cv::Point2i _point[5];
     int _click_index;
     cv::Mat _R,_t;
+    cv::Mat _turtle_image;
 
     static void onMouse( int evt, int x, int y, int flags, void* param );
 

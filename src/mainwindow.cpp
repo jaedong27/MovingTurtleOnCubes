@@ -22,6 +22,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->numCenterWidth->setValue(qsettings.value("CenterWidth",0).toFloat());
     ui->numCenterHeight->setValue(qsettings.value("CenterHeight",0).toFloat());
     ui->numCubeSize->setValue(qsettings.value("CubeSize",0).toFloat());
+
+    _turtle_image = cv::imread("./turtle.png");
+    if(_turtle_image.empty())
+    {
+        qDebug() << "Turtle Image Empty";
+        exit(1);
+    }
 }
 
 MainWindow::~MainWindow()
@@ -167,9 +174,9 @@ void MainWindow::on_butStart_clicked()
     cv::namedWindow("Play");
     double size = ui->numCubeSize->value();
     cv::Mat point = cv::Mat(3,1,CV_64FC1);
-    point.at<double>(0,0) = ui->numCenterWidth->value();
-    point.at<double>(1,0) = ui->numCenterHeight->value();
-    point.at<double>(2,0) = size/2;
+    point.at<double>(0,0) = size/2;
+    point.at<double>(1,0) = size/2;
+    point.at<double>(2,0) = size;
     cv::Mat intrinsic = _camera._intrinsic_param;
     while(1)
     {
@@ -187,6 +194,7 @@ void MainWindow::on_butStart_clicked()
         cv::Point2f temp_point = cv::Point2f(UV_point.at<double>(0,0),UV_point.at<double>(1,0));
         //qDebug() << temp_point.x << temp_point.y;
         cv::circle(image,temp_point,10,cv::Scalar(0,0,255),2);
+        //Turtle ->
         //cv::circle(image,_point[4],5,cv::Scalar(0,0,255),2);
         cv::imshow("Play",image);
         int ch = cv::waitKey(0);
@@ -194,6 +202,7 @@ void MainWindow::on_butStart_clicked()
         {
             case 'W':
             case 'w':
+            case Qt::Key_Up:
                 point.at<double>(0,0) -= size;
             break;
             case 'A':
@@ -222,9 +231,9 @@ void MainWindow::on_butStart_clicked()
             break;
             case 'r':
             case 'R':
-                point.at<double>(0,0) = ui->numCenterWidth->value();
-                point.at<double>(1,0) = ui->numCenterHeight->value();
-                point.at<double>(2,0) = size/2;
+                point.at<double>(0,0) = size/2;
+                point.at<double>(1,0) = size/2;
+                point.at<double>(2,0) = size;
             break;
         }
 
