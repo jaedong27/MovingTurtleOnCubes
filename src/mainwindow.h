@@ -29,6 +29,8 @@ public:
     cv::Mat _R,_t;
     cv::Mat _turtle_image;
 
+    bool _calib_ui_flag;
+
     static void onMouse( int evt, int x, int y, int flags, void* param );
 
     void drawTurtle(cv::Mat &image, cv::Point points[4]);

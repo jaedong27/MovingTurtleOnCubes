@@ -50,6 +50,8 @@ bool Camera::open(int index)
     cv::initUndistortRectifyMap(_intrinsic_param,_distort_param,cv::Mat(),
                                  cv::getOptimalNewCameraMatrix(_intrinsic_param, _distort_param, cv::Size(1920,1080), 1, cv::Size(1920,1080), 0),
                                  cv::Size(_width,_height), CV_16SC2, _distort_remap1, _distort_remap2);
+
+    return isOpen();
 }
 
 bool Camera::isOpen()

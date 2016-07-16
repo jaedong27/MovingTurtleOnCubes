@@ -4,6 +4,8 @@
 #include "QDebug"
 #include "QSettings"
 #include "QElapsedTimer"
+#include "QString"
+#include "QStringList"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,15 +13,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     _click_index = 0;
-    _point[0] = cv::Point2i(10 ,10 );
-    _point[1] = cv::Point2i(200,10 );
-    _point[2] = cv::Point2i(200,200);
-    _point[3] = cv::Point2i(10 ,200);
-    _point[4] = cv::Point2i(100,100);
 
-    QSettings qsettings("GSCT", "Turtle_");
+    QSettings qsettings("GSCT", "Turtle");
     ui->numCameraIndex->setValue(qsettings.value("CameraIndex",0).toInt());
-    ui->numCubeSize->setValue(qsettings.value("CubeSize",0).toFloat());
 
     _turtle_image = cv::imread("./turtle_.png");//,cv::IMREAD_UNCHANGED);
     if(_turtle_image.empty())
@@ -27,6 +23,22 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "Turtle Image Empty";
         exit(1);
     }
+
+    on_butCameraOpen_clicked();
+
+    QStringList list = qsettings.value("CalibPoint","10,10,200,10,200,200,10,200").toString().split(',');
+    if(list.size() == 8)
+    {
+        _point[0] = cv::Point2i(list[0].toInt(),list[1].toInt() );
+        _point[1] = cv::Point2i(list[2].toInt(),list[3].toInt() );
+        _point[2] = cv::Point2i(list[4].toInt(),list[5].toInt() );
+        _point[3] = cv::Point2i(list[6].toInt(),list[7].toInt() );
+        _point[4] = cv::Point2i(100,100);
+
+        _calib_ui_flag = false;
+        on_butCalibration_clicked();
+    }
+    _calib_ui_flag = true;
 }
 
 MainWindow::~MainWindow()
@@ -49,6 +61,8 @@ void MainWindow::onMouse(int evt, int x, int y, int flags, void *param)
 
 void MainWindow::drawTurtle(cv::Mat &image, cv::Point points[4])
 {
+    //QElapsedTimer t;
+    //t.start();
     if(_turtle_image.empty()) return;
 
     int img_width = _turtle_image.cols;
@@ -66,6 +80,7 @@ void MainWindow::drawTurtle(cv::Mat &image, cv::Point points[4])
     obj.push_back(cv::Point2f(img_width-1,img_height-1));
     obj.push_back(cv::Point2f(0,img_height-1));
 
+    //qDebug() << "(1)" << t.elapsed();
     for(int i = 0 ; i < 4 ; i++)
     {
         //qDebug() << points[i].x << points[i].y;
@@ -76,6 +91,8 @@ void MainWindow::drawTurtle(cv::Mat &image, cv::Point points[4])
     cv::Mat H = cv::findHomography(scene,obj);
     //qDebug() << "jaedong : " << H.type()<< H.rows << H.cols;
 
+    //qDebug() << "(2)" << t.elapsed();
+
     int min_u = 99999;
     int max_u = -1;
     int min_v = 99999;
@@ -83,18 +100,20 @@ void MainWindow::drawTurtle(cv::Mat &image, cv::Point points[4])
 
     for(int i = 0 ; i < 4 ; i++)
     {
-        min_u = qMin<int>(min_u,obj[i].x);
-        min_v = qMin<int>(min_v,obj[i].y);
-        max_u = qMax<int>(max_u,obj[i].x);
-        max_v = qMax<int>(max_v,obj[i].y);
+        min_u = qMin<int>(min_u,points[i].x);
+        min_v = qMin<int>(min_v,points[i].y);
+        max_u = qMax<int>(max_u,points[i].x);
+        max_v = qMax<int>(max_v,points[i].y);
     }
 
     min_u = qMax<int>(0, min_u);
     min_v = qMax<int>(0, min_v);
-    max_u = qMax<int>(image.cols, max_u);
-    max_v = qMax<int>(image.rows, max_v);
+    max_u = qMin<int>(image.cols, max_u);
+    max_v = qMin<int>(image.rows, max_v);
     cv::Rect rect = cv::Rect(cv::Point(0,0),cv::Point(img_width,img_height));
     cv::Rect image_rect = cv::Rect(cv::Point(0,0),cv::Point(image.cols,image.rows));
+
+    //qDebug() << "(3)" << t.elapsed() << min_u << min_v << max_u << max_v;
     for(int v = min_v ; v < max_v ; v++)
     {
         for(int u = min_u ; u < max_u ; u++)
@@ -122,6 +141,8 @@ void MainWindow::drawTurtle(cv::Mat &image, cv::Point points[4])
             }
         }
     }
+
+    //qDebug() << "(4)" << t.elapsed();
 }
 
 void MainWindow::on_butCameraOpen_clicked()
@@ -137,6 +158,8 @@ void MainWindow::on_butCameraOpen_clicked()
 
         QSettings qsettings("GSCT", "Turtle");
         qsettings.setValue("CameraIndex",camera_index);
+
+        ui->butCalibration->setEnabled(true);
     }
 }
 
@@ -144,7 +167,7 @@ void MainWindow::on_butCalibration_clicked()
 {
     cv::namedWindow("Calibration");
     cv::setMouseCallback( "Calibration", onMouse, this );
-    while(1)
+    while(_calib_ui_flag)
     {
         bool end_flag = false;
         //Calibration Update;
@@ -175,14 +198,22 @@ void MainWindow::on_butCalibration_clicked()
             //case '5':
             //    _click_index = 4;
             //break;
-            case 'E':
-            case 'e':
+            case 'P':
+            case 'p':
                 end_flag = true;
             break;
         }
 
         if(end_flag) break;
     }
+
+    QString points = QString::number(_point[0].x) + ',' + QString::number(_point[0].y)
+                     + ',' + QString::number(_point[1].x) + ',' + QString::number(_point[1].y)
+                     + ',' + QString::number(_point[2].x) + ',' + QString::number(_point[2].y)
+                     + ',' + QString::number(_point[3].x) + ',' + QString::number(_point[3].y);
+    qDebug() << points;
+    QSettings qsettings("GSCT", "Turtle");
+    qsettings.setValue("CalibPoint",points);
 
     // matching pairs
     std::vector<cv::Point3f> objectPoints;	// 3d world coordinates
@@ -234,19 +265,20 @@ void MainWindow::on_butCalibration_clicked()
     // camera posiation
     //printf("x=%lf, y=%lf, z=%lf", p[0], p[1], p[2]);
     cv::destroyAllWindows();
+
+    ui->butStart->setEnabled(true);
 }
 
 void MainWindow::on_butStart_clicked()
 {
     QSettings qsettings("GSCT", "Turtle");
-    qsettings.setValue("CubeSize",ui->numCubeSize->value());
 
     cv::namedWindow("Play");
     double size = 2;//ui->numCubeSize->value();
     cv::Mat point = cv::Mat(3,1,CV_64FC1);
     point.at<double>(0,0) = size/2;
     point.at<double>(1,0) = size/2;
-    point.at<double>(2,0) = 0;
+    point.at<double>(2,0) = -size;
     cv::Mat intrinsic = _camera._intrinsic_param;
 
     cv::Mat point_list[4];
@@ -258,10 +290,10 @@ void MainWindow::on_butStart_clicked()
 
     int direction = 0;
     cv::Point direction_position[4];
-    direction_position[0] = cv::Point(1 , 0);
-    direction_position[1] = cv::Point(0 , 1);
-    direction_position[2] = cv::Point(-1, 0);
-    direction_position[3] = cv::Point(0 ,-1);
+    direction_position[0] = cv::Point( 0,  2);
+    direction_position[1] = cv::Point(-2,  0);
+    direction_position[2] = cv::Point( 0, -2);
+    direction_position[3] = cv::Point( 2,  0);
 
     cv::Point line_position[4];
     line_position[0] = cv::Point(-1 , -1);
@@ -287,7 +319,7 @@ void MainWindow::on_butStart_clicked()
 
         //cv::Point2f temp_point = cv::Point2f(UV_point.at<double>(0,0),UV_point.at<double>(1,0));
         //qDebug() << temp_point.x << temp_point.y;
-        qDebug() << "1 : " << timer.elapsed();
+        //qDebug() << "1 : " << timer.elapsed();
         for(int i = 0 ; i < 4; i++)
         {
             point_list[i].at<double>(0,0) = point.at<double>(0,0) + line_position[(direction+i)%4].x;
@@ -303,40 +335,44 @@ void MainWindow::on_butStart_clicked()
 //        point_list[1].at<double>(0,0) = size; point_list[1].at<double>(1,0) = 0;
 //        point_list[2].at<double>(0,0) = 0;    point_list[2].at<double>(1,0) = size;
 //        point_list[3].at<double>(0,0) = size; point_list[3].at<double>(1,0) = size;
-        qDebug() << "2 : " << timer.elapsed();
+        //qDebug() << "2 : " << timer.elapsed();
         drawTurtle(image,uv_point_list);
         cv::circle(image,uv_point_list[0],3,cv::Scalar(0,0,255),-1);
         cv::circle(image,uv_point_list[1],3,cv::Scalar(255,0,0),-1);
         cv::circle(image,uv_point_list[2],3,cv::Scalar(255,255,255),-1);
         cv::circle(image,uv_point_list[3],3,cv::Scalar(0,255,255),-1);
-        qDebug() << "3 : " << timer.elapsed();
+        //qDebug() << "3 : " << timer.elapsed();
 
         //Turtle ->
 
-        qDebug() << "4 : " << timer.elapsed();
+        //qDebug() << "4 : " << timer.elapsed();
         //cv::circle(image,_point[4],5,cv::Scalar(0,0,255),2);
         cv::imshow("Play",image);
-        qDebug() << "5 : " << timer.elapsed();
-        int ch = cv::waitKey(30);
-        qDebug() << "6 : " << timer.elapsed();
+        //qDebug() << "5 : " << timer.elapsed();
+        int ch = cv::waitKey(10);
+        //qDebug() << "6 : " << timer.elapsed();
         switch(ch)
         {
             case 'W':
             case 'w':
             case Qt::Key_Up:
-                point.at<double>(1,0) -= size;
-            break;
-            case 'A':
-            case 'a':
-                point.at<double>(0,0) -= size;
-            break;
-            case 'S':
-            case 's':
-                point.at<double>(1,0) += size;
+                point.at<double>(0,0) -= direction_position[direction%4].x;
+                point.at<double>(1,0) -= direction_position[direction%4].y;
             break;
             case 'D':
             case 'd':
-                point.at<double>(0,0) += size;
+                point.at<double>(0,0) -= direction_position[(direction+1)%4].x;
+                point.at<double>(1,0) -= direction_position[(direction+1)%4].y;
+            break;
+            case 'S':
+            case 's':
+                point.at<double>(0,0) -= direction_position[(direction+2)%4].x;
+                point.at<double>(1,0) -= direction_position[(direction+2)%4].y;
+            break;
+            case 'A':
+            case 'a':
+                point.at<double>(0,0) -= direction_position[(direction+3)%4].x;
+                point.at<double>(1,0) -= direction_position[(direction+3)%4].y;
             break;
             case 'u':
             case 'U':
@@ -345,9 +381,17 @@ void MainWindow::on_butStart_clicked()
             case 'j':
             case 'J':
                 point.at<double>(2,0) += size;
-            break;
+            break;    
             case 'e':
             case 'E':
+                direction = (direction+1)%4;
+            break;
+            case 'q':
+            case 'Q':
+                direction = (direction-1)%4;
+            break;
+            case 'p':
+            case 'P':
                 end_flag = true;
             break;
             case 'r':

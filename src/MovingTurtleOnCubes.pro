@@ -27,6 +27,13 @@ macx{
     LIBS += -lopencv_calib3d
 }
 
+win32{
+    INCLUDEPATH += "I:\Library\opencv_300\build\include"
+    LIBS += -L"I:\Library\opencv_300\build\x64\vc12\lib"
+    LIBS += -lopencv_ts300
+    LIBS += -lopencv_world300
+}
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     Camera.cpp

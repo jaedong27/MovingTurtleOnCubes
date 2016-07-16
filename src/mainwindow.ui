@@ -15,10 +15,13 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QPushButton" name="butCalibration">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>40</y>
+      <x>70</x>
+      <y>60</y>
       <width>161</width>
       <height>41</height>
      </rect>
@@ -63,43 +66,14 @@
      </rect>
     </property>
    </widget>
-   <widget class="QDoubleSpinBox" name="numCubeSize">
-    <property name="geometry">
-     <rect>
-      <x>226</x>
-      <y>49</y>
-      <width>121</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>1</number>
-    </property>
-    <property name="maximum">
-     <double>10000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.100000000000000</double>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_6">
-    <property name="geometry">
-     <rect>
-      <x>12</x>
-      <y>50</y>
-      <width>101</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Cube Size(mm) : </string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="butStart">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>80</y>
+      <x>270</x>
+      <y>60</y>
       <width>161</width>
       <height>41</height>
      </rect>
