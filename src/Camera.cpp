@@ -19,7 +19,7 @@ bool Camera::open(int index)
     _height = 1080;
 //    qDebug() << "CV_CAP_PROP_EXPOSURE" << ":" << _capture.set(CV_CAP_PROP_EXPOSURE,-2.0f);
 //    qDebug() << "CV_CAP_PROP_EXPOSURE" << ":" << _capture.get(CV_CAP_PROP_EXPOSURE);
-//    qDebug() << "CV_CAP_PROP_FOCUS" << ":" << _capture.set(CV_CAP_PROP_FOCUS, 0);
+    qDebug() << "CV_CAP_PROP_FOCUS" << ":" << _capture.set(CV_CAP_PROP_FOCUS, 0);
 //    qDebug() << "CV_CAP_PROP_FOCUS" << " : " << _capture.set(CV_CAP_PROP_FOCUS, 0);
     _capture.set(CV_CAP_PROP_FOCUS, 0);
 
@@ -63,6 +63,7 @@ bool Camera::getImage()
     _mutex.lock();
     try {
         _capture >> _image; // get a new frame from webcam
+        //resize(_image, _image, cv::Size(), 2, 2);
         cv::remap(_image, _image, _distort_remap1, _distort_remap2, cv::INTER_LINEAR);
         //cv::cvtColor(_image,_image,CV_BGR2RGB);
     } catch(cv::Exception& e) {

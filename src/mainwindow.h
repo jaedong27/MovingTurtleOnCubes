@@ -31,6 +31,8 @@ public:
 
     static void onMouse( int evt, int x, int y, int flags, void* param );
 
+    void drawTurtle(cv::Mat &image, cv::Point points[4]);
+
 private slots:
     void on_butCalibration_clicked();
 
